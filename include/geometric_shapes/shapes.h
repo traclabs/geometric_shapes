@@ -328,13 +328,15 @@ public:
   Mesh* clone() const override;
   void print(std::ostream& out = std::cout) const override;
 
-  /** \brief Compute the normals of each triangle from its vertices via cross product. */
+  void padd_fatten(double padding);
+
+  /** \brief The normals to each vertex, averaged from the triangle normals. computeTriangleNormals() is automatically called if needed. */
   void computeTriangleNormals();
 
   /** \brief Compute vertex normals by averaging from adjacent triangle normals.
 
      Calls computeTriangleNormals() if needed. */
-  void computeVertexNormals();
+  void computeVertexNormals_original();
 
   /** \brief Merge vertices that are very close to each other, up to a threshold*/
   void mergeVertices(double threshold);
