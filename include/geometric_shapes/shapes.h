@@ -194,12 +194,15 @@ public:
   static const std::string STRING_NAME;
 
   virtual void scaleAndPadd(double scale, double padd);
+  void padd_fatten(double padding);
   virtual Shape* clone() const;
   virtual void print(std::ostream &out = std::cout) const;
 
   /** \brief The normals to each triangle can be computed from the vertices using cross products. This function performs this computation and allocates memory for normals if needed */
   void computeTriangleNormals();
 
+  void computeVertexNormals_original();
+  
   /** \brief The normals to each vertex, averaged from the triangle normals. computeTriangleNormals() is automatically called if needed. */
   void computeVertexNormals();
 

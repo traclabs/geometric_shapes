@@ -313,6 +313,35 @@ void shapes::Mesh::scaleAndPadd(double scale, double padding)
   }
 }
 
+void shapes::Mesh::padd_fatten(double padding)
+{
+
+  // Make sure you have vertex normals
+  if( !vertex_normals ) {
+    computeVertexNormals();
+  }
+  
+  // scale the mesh
+  for (unsigned int i = 0 ; i < vertex_count ; ++i)
+  {
+    unsigned int i3 = i * 3;
+    double nx, ny, nz, norm;
+    nx = vertex_normals[i3];
+    ny = vertex_normals[i3+1];
+    nz = vertex_normals[i3+2];
+    norm = sqrt( nx*nx + ny*ny + nz*nz);
+    nx = nx/norm;
+    ny = ny/norm;
+    nz = nz/norm;
+
+    // vector from center to the vertex
+    vertices[i3]  = vertices[i3] + nx*padding;
+    vertices[i3+1]  = vertices[i3 + 1] + ny*padding;
+    vertices[i3+2]  = vertices[i3 + 2] + nz*padding;
+  }
+}
+
+
 void shapes::Shape::print(std::ostream &out) const
 {
   out << this << std::endl;
@@ -402,6 +431,71 @@ void shapes::Mesh::computeTriangleNormals()
 }
 
 void shapes::Mesh::computeVertexNormals()
+{
+  if (!triangle_normals)
+    computeTriangleNormals();
+  if (vertex_count && !vertex_normals)
+    vertex_normals = new double[vertex_count * 3];
+
+  EigenSTL::vector_Vector3d avg_normals(vertex_count, Eigen::Vector3d(0, 0, 0));
+  
+  Eigen::Vector3d p1, p2, p3;
+  double l1, l2, l3;
+  double ang1, ang2, ang3;
+  for (unsigned int tIdx = 0; tIdx < triangle_count; ++tIdx)
+  {    
+    unsigned int tIdx3 = 3 * tIdx;
+    unsigned int tIdx3_1 = tIdx3 + 1;
+    unsigned int tIdx3_2 = tIdx3 + 2;
+
+    unsigned int v1 = triangles [tIdx3];
+    unsigned int v2 = triangles [tIdx3_1];
+    unsigned int v3 = triangles [tIdx3_2];
+
+    // Get angles for each vertex at this triangle
+    p1 << vertices[3*v1],  vertices[3*v1+1],  vertices[3*v1+2];
+    p2 << vertices[3*v2],  vertices[3*v2+1],  vertices[3*v2+2];
+    p3 << vertices[3*v3],  vertices[3*v3+1],  vertices[3*v3+2];
+
+    l1 = (p3-p2).norm();
+    l2 = (p3-p1).norm();
+    l3 = (p2-p1).norm();
+
+    ang1 = acos( ( l2*l2 + l3*l3 - l1*l1 )/(2*l2*l3) );
+    ang2 = acos( ( l1*l1 + l3*l3 - l2*l2 )/(2*l1*l3) );
+    ang3 = acos( ( l1*l1 + l2*l2 - l3*l3 )/(2*l1*l2) );
+
+    if( ang1 < 0 ) { ang1 = M_PI - ang1; }
+    if( ang2 < 0 ) { ang2 = M_PI - ang2; }
+    if( ang3 < 0 ) { ang3 = M_PI - ang3; }
+    
+    // Weight normal with angle
+    avg_normals[v1][0] += triangle_normals [tIdx3]*ang1;
+    avg_normals[v1][1] += triangle_normals [tIdx3_1]*ang1;
+    avg_normals[v1][2] += triangle_normals [tIdx3_2]*ang1;
+
+    avg_normals[v2][0] += triangle_normals [tIdx3]*ang2;
+    avg_normals[v2][1] += triangle_normals [tIdx3_1]*ang2;
+    avg_normals[v2][2] += triangle_normals [tIdx3_2]*ang2;
+
+    avg_normals[v3][0] += triangle_normals [tIdx3]*ang3;
+    avg_normals[v3][1] += triangle_normals [tIdx3_1]*ang3;
+    avg_normals[v3][2] += triangle_normals [tIdx3_2]*ang3;
+  }
+
+  for (std::size_t i = 0 ; i < avg_normals.size() ; ++i)
+  {
+    if (avg_normals[i].squaredNorm () > 0.0)
+      avg_normals[i].normalize();
+    unsigned int i3 = i * 3;
+    vertex_normals[i3] = avg_normals[i][0];
+    vertex_normals[i3 + 1] = avg_normals[i][1];
+    vertex_normals[i3 + 2] = avg_normals[i][2];
+  }
+}
+
+
+void shapes::Mesh::computeVertexNormals_original()
 {
   if (!triangle_normals)
     computeTriangleNormals();
