@@ -1,0 +1,8 @@
+<launch>
+    <node pkg="geometric_shapes" type="test_scaling_padding_mesh" name="test_scaling_padding_mesh" output="screen">
+        <param name="scale" value="1.0" />
+        <param name="padding" value="0.05" />	
+        <param name="mesh_path" value="package://denso_vs068_with_gripper_gazebo/models/lab/traclabs_setup_table.dae" />	
+</node>
+
+</launch>
