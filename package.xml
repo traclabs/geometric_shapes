@@ -28,6 +28,7 @@
   <build_depend>resource_retriever</build_depend>
   <build_depend>shape_msgs</build_depend>
   <build_depend>visualization_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
 
   <build_export_depend>assimp-dev</build_export_depend>
   <build_export_depend>boost</build_export_depend>

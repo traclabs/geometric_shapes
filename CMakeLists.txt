@@ -61,6 +61,7 @@ find_package(catkin REQUIRED COMPONENTS
   resource_retriever
   shape_msgs
   visualization_msgs
+  roscpp
 )
 
 catkin_package(
@@ -72,6 +73,7 @@ catkin_package(
     random_numbers
     shape_msgs
     visualization_msgs
+    roscpp
   DEPENDS
     EIGEN3
     OCTOMAP
@@ -100,6 +102,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE ${PROJECT_COMPILE_OPTIONS})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_VERSION})
 
 target_link_libraries(${PROJECT_NAME} ${ASSIMP_LIBRARIES} ${QHULL_LIBRARIES} ${catkin_LIBRARIES} ${console_bridge_LIBRARIES} ${Boost_LIBRARIES} ${LIBFCL_LIBRARIES})
+
+add_executable( test_scaling_padding_mesh src/test_scaling_padding_mesh.cpp )
+target_link_libraries( test_scaling_padding_mesh  ${PROJECT_NAME} ${ASSIMP_LIBRARIES} ${QHULL_LIBRARIES} ${catkin_LIBRARIES} ${console_bridge_LIBRARIES} ${Boost_LIBRARIES} )
 
 
 if(CATKIN_ENABLE_TESTING)
