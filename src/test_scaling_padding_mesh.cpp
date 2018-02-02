@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <geometric_shapes/shapes.h>
 #include <geometric_shapes/mesh_operations.h>
 #include <fstream>
@@ -36,9 +37,10 @@ int main( int argc, char* argv[] ) {
   }
   mesh_shape_copy = shapes::createMeshFromResource( mesh_filename );
   
-  std::string original_mesh("/home/ana/original_mesh.stl");;
-  std::string padded_mesh("/home/ana/padded_mesh.stl");
-  std::string new_padded_mesh("/home/ana/new_padded_mesh.stl");
+  std::string pkg_path = ros::package::getPath( "geometric_shapes" );
+  std::string original_mesh = pkg_path + std::string("/launch/original_mesh.stl");;
+  std::string padded_mesh = pkg_path + std::string("/launch/padded_mesh.stl");
+  std::string new_padded_mesh = pkg_path + std::string("/launch/new_padded_mesh.stl");
   std::vector<char> original_buffer, padded_buffer, new_padded_buffer;
 
   

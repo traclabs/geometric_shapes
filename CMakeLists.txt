@@ -62,6 +62,7 @@ find_package(catkin REQUIRED COMPONENTS
   shape_msgs
   visualization_msgs
   roscpp
+  roslib
 )
 
 catkin_package(
@@ -74,6 +75,7 @@ catkin_package(
     shape_msgs
     visualization_msgs
     roscpp
+    roslib
   DEPENDS
     EIGEN3
     OCTOMAP
