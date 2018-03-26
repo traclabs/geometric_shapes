@@ -269,6 +269,11 @@ void shapes::Box::scaleAndPadd(double scale, double padding)
 
 void shapes::Mesh::scaleAndPadd(double scale, double padding)
 {
+   if( scale != 1.0 ) {
+     CONSOLE_BRIDGE_logWarn("Scale and padd fattening version: SCALE SHOULD BE 1.0 FOR TESTING!");
+   }
+   padd_fatten( padding );
+/*
   // find the center of the mesh
   double sx = 0.0, sy = 0.0, sz = 0.0;
   for (unsigned int i = 0 ; i < vertex_count ; ++i)
@@ -311,6 +316,7 @@ void shapes::Mesh::scaleAndPadd(double scale, double padding)
       vertices[i3 + 2] = sz + ndz;
     }
   }
+*/
 }
 
 void shapes::Mesh::padd_fatten(double padding)
