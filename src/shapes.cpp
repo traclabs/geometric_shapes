@@ -321,12 +321,12 @@ void shapes::Mesh::scaleAndPadd(double scale, double padding)
 
 void shapes::Mesh::padd_fatten(double padding)
 {
-
+ 
   // Make sure you have vertex normals
   if( !vertex_normals ) {
     computeVertexNormals();
   }
-  
+
   // scale the mesh
   for (unsigned int i = 0 ; i < vertex_count ; ++i)
   {
@@ -335,15 +335,16 @@ void shapes::Mesh::padd_fatten(double padding)
     nx = vertex_normals[i3];
     ny = vertex_normals[i3+1];
     nz = vertex_normals[i3+2];
-    norm = sqrt( nx*nx + ny*ny + nz*nz);
+    norm = std::sqrt( nx*nx + ny*ny + nz*nz);
+
     nx = nx/norm;
     ny = ny/norm;
     nz = nz/norm;
-
+    
     // vector from center to the vertex
-    vertices[i3]  = vertices[i3] + nx*padding;
-    vertices[i3+1]  = vertices[i3 + 1] + ny*padding;
-    vertices[i3+2]  = vertices[i3 + 2] + nz*padding;
+    vertices[i3]  += nx*padding;
+    vertices[i3+1] += ny*padding;
+    vertices[i3+2] += nz*padding;
   }
 }
 
@@ -430,6 +431,7 @@ void shapes::Mesh::computeTriangleNormals()
                        vertices[triangles[i3 + 1] * 3 + 2] - vertices[triangles[i3 + 2] * 3 + 2]);
     Eigen::Vector3d normal = s1.cross(s2);
     normal.normalize();
+    
     triangle_normals[i3    ] = normal.x();
     triangle_normals[i3 + 1] = normal.y();
     triangle_normals[i3 + 2] = normal.z();
@@ -493,6 +495,9 @@ void shapes::Mesh::computeVertexNormals()
   {
     if (avg_normals[i].squaredNorm () > 0.0)
       avg_normals[i].normalize();
+    else
+      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=std::sqrt(1.0/3);
+    
     unsigned int i3 = i * 3;
     vertex_normals[i3] = avg_normals[i][0];
     vertex_normals[i3 + 1] = avg_normals[i][1];
@@ -535,6 +540,9 @@ void shapes::Mesh::computeVertexNormals_original()
   {
     if (avg_normals[i].squaredNorm () > 0.0)
       avg_normals[i].normalize();
+    else
+      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=std::sqrt(1.0/3);
+
     unsigned int i3 = i * 3;
     vertex_normals[i3] = avg_normals[i][0];
     vertex_normals[i3 + 1] = avg_normals[i][1];
