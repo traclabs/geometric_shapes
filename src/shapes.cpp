@@ -442,15 +442,16 @@ void Mesh::padd_fatten(double padding)
     nx = vertex_normals[i3];
     ny = vertex_normals[i3+1];
     nz = vertex_normals[i3+2];
-    norm = sqrt( nx*nx + ny*ny + nz*nz);
+    norm = std::sqrt( nx*nx + ny*ny + nz*nz);
+
     nx = nx/norm;
     ny = ny/norm;
     nz = nz/norm;
 
     // vector from center to the vertex
-    vertices[i3]  = vertices[i3] + nx*padding;
-    vertices[i3+1]  = vertices[i3 + 1] + ny*padding;
-    vertices[i3+2]  = vertices[i3 + 2] + nz*padding;
+    vertices[i3]  += nx*padding;
+    vertices[i3+1] += ny*padding;
+    vertices[i3+2] += nz*padding;
   }
 }
 
@@ -600,6 +601,9 @@ void Mesh::computeVertexNormals()
   {
     if (avg_normals[i].squaredNorm () > 0.0)
       avg_normals[i].normalize();
+    else
+      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=std::sqrt(1.0/3);
+
     unsigned int i3 = i * 3;
     vertex_normals[i3] = avg_normals[i][0];
     vertex_normals[i3 + 1] = avg_normals[i][1];
@@ -642,6 +646,9 @@ void shapes::Mesh::computeVertexNormals_original()
   {
     if (avg_normals[i].squaredNorm() > 0.0)
       avg_normals[i].normalize();
+    else
+      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=std::sqrt(1.0/3);
+
     unsigned int i3 = i * 3;
     vertex_normals[i3] = avg_normals[i][0];
     vertex_normals[i3 + 1] = avg_normals[i][1];
