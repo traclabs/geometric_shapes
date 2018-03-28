@@ -243,7 +243,6 @@ Mesh* createMeshFromBinary(const char* buffer, std::size_t size, const Eigen::Ve
                                                           aiComponent_CAMERAS | aiComponent_MATERIALS);
 
   // And have it read the given file with some post-processing
-  printf("ASIMP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   const aiScene* scene = importer.ReadFileFromMemory(reinterpret_cast<const void*>(buffer), size,
                                                      aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
                                                          aiProcess_SortByPType | aiProcess_RemoveComponent,
