@@ -110,7 +110,7 @@ struct ltLocalVertexIndex
 }
 
 Mesh* createMeshFromVertices(const EigenSTL::vector_Vector3d &vertices, const std::vector<unsigned int> &triangles)
-{
+{ printf("Create mesh from vertices 1 \n");
   unsigned int nt = triangles.size() / 3;
   Mesh *mesh = new Mesh(vertices.size(), nt);
   for (unsigned int i = 0 ; i < vertices.size() ; ++i)
@@ -128,7 +128,7 @@ Mesh* createMeshFromVertices(const EigenSTL::vector_Vector3d &vertices, const st
 }
 
 Mesh* createMeshFromVertices(const EigenSTL::vector_Vector3d &source)
-{
+{printf("Create mesh from vertices 2 \n");
   if (source.size() < 3)
     return NULL;
 
@@ -253,6 +253,7 @@ Mesh* createMeshFromBinary(const char *buffer, std::size_t size, const Eigen::Ve
           aiComponent_MATERIALS);
 
   // And have it read the given file with some post-processing
+  printf("ASIMP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   const aiScene* scene = importer.ReadFileFromMemory(reinterpret_cast<const void*>(buffer), size,
                                                      aiProcess_Triangulate            |
                                                      aiProcess_JoinIdenticalVertices  |

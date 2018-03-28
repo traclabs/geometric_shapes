@@ -132,14 +132,14 @@ shapes::Mesh::Mesh(unsigned int v_count, unsigned int t_count) : Shape()
 
 shapes::Mesh::~Mesh()
 {
-  if (vertices)
-    delete[] vertices;
+  if (vertices) 
+    delete[] vertices; 
   if (triangles)
     delete[] triangles;
-  if (triangle_normals)
+  if (triangle_normals) 
     delete[] triangle_normals;
   if (vertex_normals)
-    delete[] vertex_normals;
+    delete[] vertex_normals; 
 }
 
 shapes::Plane::Plane() : Shape()
@@ -320,8 +320,7 @@ void shapes::Mesh::scaleAndPadd(double scale, double padding)
 }
 
 void shapes::Mesh::padd_fatten(double padding)
-{
- 
+{  
   // Make sure you have vertex normals
   if( !vertex_normals ) {
     computeVertexNormals();
@@ -337,10 +336,9 @@ void shapes::Mesh::padd_fatten(double padding)
     nz = vertex_normals[i3+2];
     norm = std::sqrt( nx*nx + ny*ny + nz*nz);
 
-    nx = nx/norm;
-    ny = ny/norm;
-    nz = nz/norm;
-    
+    if( norm != 0 ) {
+      nx = nx/norm;  ny = ny/norm;  nz = nz/norm;
+    } 
     // vector from center to the vertex
     vertices[i3]  += nx*padding;
     vertices[i3+1] += ny*padding;
@@ -414,11 +412,57 @@ bool shapes::Plane::isFixed() const
   return true;
 }
 
-void shapes::Mesh::computeTriangleNormals()
-{
-  if (triangle_count && !triangle_normals)
-    triangle_normals = new double[triangle_count * 3];
+void shapes::Mesh::delete_invalid_triangles( shapes::Mesh* _mesh ) {
+       if( !_mesh ) { return; }
+      // Merge vertices
+      bool compute_triangle_normals = false;
+      bool compute_vertex_normals = false;
+      _mesh->mergeVertices( 0.000001, compute_triangle_normals, compute_vertex_normals ); // 1e-6
+      // Go through all the triangles
+      unsigned int v1, v2, v3;
+      Eigen::Vector3d p1, p2, p3, s1, s2, ns;
+      std::vector<Eigen::Vector3i> triangle_ok_vertices;
+      for( unsigned int k = 0; k < _mesh->triangle_count; ++k ) {
+        v1 = _mesh->triangles[3*k];
+        v2 = _mesh->triangles[3*k+1];
+        v3 = _mesh->triangles[3*k+2];
+        // Check that the vertices are indeed different
+        p1 << _mesh->vertices[3*v1], _mesh->vertices[3*v1+1], _mesh->vertices[3*v1+2];
+        p2 << _mesh->vertices[3*v2], _mesh->vertices[3*v2+1], _mesh->vertices[3*v2+2];
+        p3 << _mesh->vertices[3*v3], _mesh->vertices[3*v3+1], _mesh->vertices[3*v3+2];
+        s1 = (p1-p2); s2 = (p3 - p2); ns = s1.cross(s2);
+        bool a = (p1-p2).norm() == 0 || (p2-p3).norm() == 0 || (p1-p3).norm() == 0;
+        bool b =  ns.norm() == 0;
+        if( a || b ) {
+          // Bad triangle
+        } else {
+          triangle_ok_vertices.push_back( Eigen::Vector3i(v1, v2, v3) );
+        }
+      }
 
+      // Redo
+      _mesh->triangle_count = triangle_ok_vertices.size();
+      delete[] _mesh->triangles;
+      _mesh->triangles = new unsigned int[_mesh->triangle_count*3];
+      for( int k = 0; k < _mesh->triangle_count; ++k ) {
+        _mesh->triangles[3*k] = triangle_ok_vertices[k](0);
+        _mesh->triangles[3*k+1] = triangle_ok_vertices[k](1);
+        _mesh->triangles[3*k+2] = triangle_ok_vertices[k](2);
+      } // for k
+
+      // Redo normals for triangles and vertices
+      delete[] _mesh->triangle_normals; _mesh->triangle_normals = new double[_mesh->triangle_count*3];
+      delete[] _mesh->vertex_normals; _mesh->vertex_normals = new double[_mesh->vertex_count*3];
+      _mesh->computeTriangleNormals(true);
+      _mesh->computeVertexNormals(true);
+
+    }
+
+void shapes::Mesh::computeTriangleNormals( bool debug )
+{ 
+  if (triangle_count && !triangle_normals) {
+    triangle_normals = new double[triangle_count * 3];
+  }
   // compute normals
   for (unsigned int i = 0 ; i < triangle_count ; ++i)
   {
@@ -429,24 +473,40 @@ void shapes::Mesh::computeTriangleNormals()
     Eigen::Vector3d s2(vertices[triangles[i3 + 1] * 3] - vertices[triangles[i3 + 2] * 3],
                        vertices[triangles[i3 + 1] * 3 + 1] - vertices[triangles[i3 + 2] * 3 + 1],
                        vertices[triangles[i3 + 1] * 3 + 2] - vertices[triangles[i3 + 2] * 3 + 2]);
+    if( debug ) {
+    if( s1.norm() < 0.00000001 || s2.norm() < 0.00000001 ) {
+     // std::cout << "* Triangle normals: i3: "<< i3 << "--  s1: " << s1.transpose() << " -- s2: " << s2.transpose() << std::endl;
+    }
+
+    if( std::isnan(s1(0)) || std::isnan(s1(1)) || std::isnan(s1(2)) ) { std::cout << "S1 is nan: " << s1.transpose() << std::endl; } 
+    if( std::isnan(s2(0)) || std::isnan(s2(1)) || std::isnan(s2(2)) ) { std::cout << "S2 is nan: " << s1.transpose() << std::endl; } 
+}
     Eigen::Vector3d normal = s1.cross(s2);
+    if( debug ) {
+    if( normal.norm() == 0 ) { 
+      Eigen::Vector3d p1, p2, p3;
+      p1 << vertices[triangles[i3] * 3], vertices[triangles[i3] * 3 + 1], vertices[triangles[i3] * 3 + 2]; 
+      p2 << vertices[triangles[i3+1] * 3], vertices[triangles[i3+1] * 3 + 1], vertices[triangles[i3+1] * 3 + 2]; 
+      p3 << vertices[triangles[i3+2] * 3], vertices[triangles[i3+2] * 3 + 1], vertices[triangles[i3+2] * 3 + 2]; 
+     // printf("Normal norm is zero: %f ", normal.norm() ); std::cout << " s1: " << s1.transpose() << " s2: " << s2.transpose() << std::endl; 
+     // std::cout << "\t p1: " << p1.transpose() << " p2: " << p2.transpose() << " p3: " << p3.transpose() << std::endl; 
+   }
+  } // debug
     normal.normalize();
-    
+
     triangle_normals[i3    ] = normal.x();
     triangle_normals[i3 + 1] = normal.y();
     triangle_normals[i3 + 2] = normal.z();
   }
 }
 
-void shapes::Mesh::computeVertexNormals()
-{
+void shapes::Mesh::computeVertexNormals(bool debug)
+{ 
   if (!triangle_normals)
     computeTriangleNormals();
   if (vertex_count && !vertex_normals)
     vertex_normals = new double[vertex_count * 3];
-
   EigenSTL::vector_Vector3d avg_normals(vertex_count, Eigen::Vector3d(0, 0, 0));
-  
   Eigen::Vector3d p1, p2, p3;
   double l1, l2, l3;
   double ang1, ang2, ang3;
@@ -476,7 +536,7 @@ void shapes::Mesh::computeVertexNormals()
     if( ang1 < 0 ) { ang1 = M_PI - ang1; }
     if( ang2 < 0 ) { ang2 = M_PI - ang2; }
     if( ang3 < 0 ) { ang3 = M_PI - ang3; }
-    
+
     // Weight normal with angle
     avg_normals[v1][0] += triangle_normals [tIdx3]*ang1;
     avg_normals[v1][1] += triangle_normals [tIdx3_1]*ang1;
@@ -492,12 +552,13 @@ void shapes::Mesh::computeVertexNormals()
   }
 
   for (std::size_t i = 0 ; i < avg_normals.size() ; ++i)
-  {
-    if (avg_normals[i].squaredNorm () > 0.0)
+  { 
+    if (avg_normals[i].squaredNorm () > 0.0) {
       avg_normals[i].normalize();
-    else
+    } else {
+      //if( debug ) { printf("Had to use Patrick trick!!!! [%d] avg normal: %f %f %f \n", i, avg_normals[i][0], avg_normals[i][1], avg_normals[i][2] ); }
       avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=std::sqrt(1.0/3);
-    
+    }
     unsigned int i3 = i * 3;
     vertex_normals[i3] = avg_normals[i][0];
     vertex_normals[i3 + 1] = avg_normals[i][1];
@@ -550,7 +611,7 @@ void shapes::Mesh::computeVertexNormals_original()
   }
 }
 
-void shapes::Mesh::mergeVertices(double threshold)
+void shapes::Mesh::mergeVertices(double threshold, bool _calculate_triangle_normals, bool _calculate_vertex_normals)
 {
   const double thresholdSQR = threshold * threshold;
 
@@ -606,8 +667,12 @@ void shapes::Mesh::mergeVertices(double threshold)
     vertices[i3 + 2] = compressed_vertices[vIdx][2];
   }
 
-  if (triangle_normals)
+  if (triangle_normals && _calculate_triangle_normals ) {
     computeTriangleNormals();
-  if (vertex_normals)
+  }
+  if (vertex_normals && _calculate_vertex_normals ) {
     computeVertexNormals();
+  }
 }
+
+
