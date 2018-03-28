@@ -330,16 +330,19 @@ public:
 
   void padd_fatten(double padding);
 
-  /** \brief The normals to each vertex, averaged from the triangle normals. computeTriangleNormals() is automatically called if needed. */
-  void computeTriangleNormals();
+  /** \brief The normals to each triangle can be computed from the vertices using cross products. This function performs this computation and allocates memory for normals if needed */
+  void computeTriangleNormals( bool debug = false );
 
   /** \brief Compute vertex normals by averaging from adjacent triangle normals.
 
      Calls computeTriangleNormals() if needed. */
   void computeVertexNormals_original();
 
+  /** \brief The normals to each vertex, averaged from the triangle normals. computeTriangleNormals() is automatically called if needed. */
+  void computeVertexNormals(bool debug = false);
+
   /** \brief Merge vertices that are very close to each other, up to a threshold*/
-  void mergeVertices(double threshold);
+  void mergeVertices(double threshold, bool _calculate_triangle_normals = false, bool _calculate_vertex_normals = false );
 
   /** \brief The number of available vertices */
   unsigned int vertex_count;
@@ -362,6 +365,8 @@ public:
   /** \brief The normal to each vertex; unit vector represented
       as (x,y,z); If missing from the mesh, these vectors can be computed using computeVertexNormals()  */
   double* vertex_normals;
+
+  static void delete_invalid_triangles( shapes::Mesh* _mesh );
 };
 
 /** \brief Definition of a plane with equation ax + by + cz + d = 0 */
