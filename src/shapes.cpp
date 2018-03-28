@@ -661,10 +661,10 @@ void Mesh::computeVertexNormals(bool debug)
   {
     if (avg_normals[i].squaredNorm () > 0.0) {
       avg_normals[i].normalize();
-    } else {
-      //if( debug ) { printf("Had to use Patrick trick!!!! [%d] avg normal: %f %f %f \n", i, avg_normals[i][0], avg_normals[i][1], avg_normals[i][2] ); }
-      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=std::sqrt(1.0/3);
     }
+    else
+      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=0;
+
     unsigned int i3 = i * 3;
     vertex_normals[i3] = avg_normals[i][0];
     vertex_normals[i3 + 1] = avg_normals[i][1];
@@ -708,7 +708,7 @@ void shapes::Mesh::computeVertexNormals_original()
     if (avg_normals[i].squaredNorm() > 0.0)
       avg_normals[i].normalize();
     else
-      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=std::sqrt(1.0/3);
+      avg_normals[i][0]=avg_normals[i][1]=avg_normals[i][2]=0;
 
     unsigned int i3 = i * 3;
     vertex_normals[i3] = avg_normals[i][0];
