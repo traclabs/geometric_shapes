@@ -377,10 +377,10 @@ void Box::scaleAndPadd(double scale, double padd)
 
 void Mesh::scaleAndPadd(double scaleX, double scaleY, double scaleZ, double paddX, double paddY, double paddZ)
 {
-   if( scale != 1.0 ) {
-     CONSOLE_BRIDGE_logWarn("Scale and padd fattening version: SCALE SHOULD BE 1.0 FOR TESTING!");
-   }
-   padd_fatten( padding );
+  //  if( scale != 1.0 ) {
+  //    CONSOLE_BRIDGE_logWarn("Scale and padd fattening version: SCALE SHOULD BE 1.0 FOR TESTING!");
+  //  }
+   padd_fatten( paddX );  // Just set to just padd x for now
 /*
   // find the center of the mesh
   double sx = 0.0, sy = 0.0, sz = 0.0;
@@ -453,8 +453,22 @@ void Mesh::padd_fatten(double padding)
   }
 }
 
+void Mesh::scale(double scaleX, double scaleY, double scaleZ)
+{
+  scaleAndPadd(scaleX, scaleY, scaleZ, 0.0, 0.0, 0.0);
+}
 
-void shapes::Shape::print(std::ostream &out) const
+void Mesh::padd(double paddX, double paddY, double paddZ)
+{
+  scaleAndPadd(1.0, 1.0, 1.0, paddX, paddY, paddZ);
+}
+
+void Mesh::scaleAndPadd(double scale, double padd)
+{
+  scaleAndPadd(scale, scale, scale, padd, padd, padd);
+}
+
+void Shape::print(std::ostream& out) const
 {
   out << this << std::endl;
 }
@@ -551,7 +565,7 @@ void shapes::Mesh::delete_invalid_triangles( shapes::Mesh* _mesh ) {
       _mesh->triangle_count = triangle_ok_vertices.size();
       delete[] _mesh->triangles;
       _mesh->triangles = new unsigned int[_mesh->triangle_count*3];
-      for( int k = 0; k < _mesh->triangle_count; ++k ) {
+      for( unsigned k = 0; k < _mesh->triangle_count; ++k ) {
         _mesh->triangles[3*k] = triangle_ok_vertices[k](0);
         _mesh->triangles[3*k+1] = triangle_ok_vertices[k](1);
         _mesh->triangles[3*k+2] = triangle_ok_vertices[k](2);
@@ -567,9 +581,8 @@ void shapes::Mesh::delete_invalid_triangles( shapes::Mesh* _mesh ) {
 
 void shapes::Mesh::computeTriangleNormals( bool debug )
 {
-  if (triangle_count && !triangle_normals) {
+  if (triangle_count && !triangle_normals)
     triangle_normals = new double[triangle_count * 3];
-  }
   // compute normals
   for (unsigned int i = 0; i < triangle_count; ++i)
   {

@@ -56,6 +56,8 @@
   <exec_depend>resource_retriever</exec_depend>
   <exec_depend>shape_msgs</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>roslib</exec_depend>
 
   <test_depend>rosunit</test_depend>
 </package>
