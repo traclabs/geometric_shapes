@@ -31,7 +31,7 @@
 #include <geometric_shapes/bodies.h>
 #include <geometric_shapes/shape_operations.h>
 #include <geometric_shapes/body_operations.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include "resources/config.h"
 
@@ -447,7 +447,7 @@ TEST(MeshPointContainment, Basic)
 {
   // clang-format off
   shapes::Mesh *ms = shapes::createMeshFromResource("file://" +
-    (boost::filesystem::path(TEST_RESOURCES_DIR) / "/box.dae").string());
+    (std::filesystem::path(TEST_RESOURCES_DIR) / "box.dae").string());
   ASSERT_TRUE(ms != nullptr);
   bodies::ConvexMesh cubeMesh(ms);
   cubeMesh.setScale(1.5);
@@ -514,7 +514,7 @@ TEST(MeshPointContainment, Basic)
 TEST(MeshPointContainment, Pr2Forearm)
 {
   shapes::Mesh* ms = shapes::createMeshFromResource(
-      "file://" + (boost::filesystem::path(TEST_RESOURCES_DIR) / "/forearm_roll.stl").string());
+      "file://" + (std::filesystem::path(TEST_RESOURCES_DIR) / "forearm_roll.stl").string());
   ASSERT_TRUE(ms != nullptr);
   bodies::Body* m = new bodies::ConvexMesh(ms);
   ASSERT_TRUE(m != nullptr);

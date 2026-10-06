@@ -49,9 +49,19 @@ Shape* constructShapeFromMsg(const shape_msgs::msg::Plane& shape_msg);
 Shape* constructShapeFromMsg(const shape_msgs::msg::Mesh& shape_msg);
 
 /** \brief Construct the shape that corresponds to the message. Return NULL on failure. */
+Shape* constructShapeFromMsg(const ShapeMsgVariant& shape_msg);
+
+/** \brief Construct the shape that corresponds to the message. Return NULL on failure.
+ *  \deprecated Use the overload taking a ShapeMsgVariant. */
+[[deprecated("Use the overload taking shapes::ShapeMsgVariant")]]
 Shape* constructShapeFromMsg(const ShapeMsg& shape_msg);
 
 /** \brief Construct the message that corresponds to the shape. Return false on failure. */
+bool constructMsgFromShape(const Shape* shape, ShapeMsgVariant& shape_msg);
+
+/** \brief Construct the message that corresponds to the shape. Return false on failure.
+ *  \deprecated Use the overload taking a ShapeMsgVariant. */
+[[deprecated("Use the overload taking shapes::ShapeMsgVariant")]]
 bool constructMsgFromShape(const Shape* shape, ShapeMsg& shape_msg);
 
 /** \brief Construct the marker that corresponds to the shape. Return false on failure. */
@@ -59,6 +69,20 @@ bool constructMarkerFromShape(const Shape* shape, visualization_msgs::msg::Marke
                               bool use_mesh_triangle_list = false);
 
 /** \brief Compute the extents of a shape */
+Eigen::Vector3d computeShapeExtents(const ShapeMsgVariant& shape_msg);
+
+/** \brief Compute the extents of a shape */
+Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::SolidPrimitive& shape_msg);
+
+/** \brief Compute the extents of a shape */
+Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::Plane& shape_msg);
+
+/** \brief Compute the extents of a shape */
+Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::Mesh& shape_msg);
+
+/** \brief Compute the extents of a shape
+ *  \deprecated Use the overload taking a ShapeMsgVariant. */
+[[deprecated("Use the overload taking shapes::ShapeMsgVariant")]]
 Eigen::Vector3d computeShapeExtents(const ShapeMsg& shape_msg);
 
 /** \brief Compute the extents of a shape */

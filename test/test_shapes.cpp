@@ -32,6 +32,8 @@
 #include <geometric_shapes/shapes.h>
 #include <geometric_shapes/shape_operations.h>
 #include <gtest/gtest.h>
+#include <memory>
+#include <variant>
 
 using namespace shapes;
 
@@ -453,6 +455,54 @@ TEST(Mesh, ScaleAndPadd)
   EXPECT_DOUBLE_EQ(mesh2->vertices[22], -pos5y);
   EXPECT_DOUBLE_EQ(mesh2->vertices[23], pos5z);
 }
+
+TEST(ShapeMsgVariant, RoundTrip)
+{
+  const Box box(1.0, 2.0, 3.0);
+
+  ShapeMsgVariant msg;
+  ASSERT_TRUE(constructMsgFromShape(&box, msg));
+  ASSERT_TRUE(std::holds_alternative<shape_msgs::msg::SolidPrimitive>(msg));
+
+  const Eigen::Vector3d extents = computeShapeExtents(msg);
+  EXPECT_DOUBLE_EQ(extents.x(), 1.0);
+  EXPECT_DOUBLE_EQ(extents.y(), 2.0);
+  EXPECT_DOUBLE_EQ(extents.z(), 3.0);
+
+  // A plain message must still resolve to a single overload (no ambiguity with the deprecated API)
+  EXPECT_DOUBLE_EQ(computeShapeExtents(std::get<shape_msgs::msg::SolidPrimitive>(msg)).y(), 2.0);
+
+  std::unique_ptr<Shape> shape(constructShapeFromMsg(msg));
+  ASSERT_NE(shape, nullptr);
+  ASSERT_EQ(shape->type, BOX);
+  EXPECT_DOUBLE_EQ(static_cast<const Box*>(shape.get())->size[2], 3.0);
+}
+
+// The deprecated boost::variant based API must keep working until it is removed
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+TEST(ShapeMsgVariant, DeprecatedBoostApi)
+{
+  const Box box(1.0, 2.0, 3.0);
+
+  ShapeMsg msg;
+  ASSERT_TRUE(constructMsgFromShape(&box, msg));
+  ASSERT_NE(boost::get<shape_msgs::msg::SolidPrimitive>(&msg), nullptr);
+
+  const Eigen::Vector3d extents = computeShapeExtents(msg);
+  EXPECT_DOUBLE_EQ(extents.x(), 1.0);
+  EXPECT_DOUBLE_EQ(extents.y(), 2.0);
+  EXPECT_DOUBLE_EQ(extents.z(), 3.0);
+
+  std::unique_ptr<Shape> shape(constructShapeFromMsg(msg));
+  ASSERT_NE(shape, nullptr);
+  EXPECT_EQ(shape->type, BOX);
+}
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 int main(int argc, char** argv)
 {

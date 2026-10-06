@@ -31,7 +31,7 @@
 #include <geometric_shapes/bodies.h>
 #include <geometric_shapes/shape_operations.h>
 #include <geometric_shapes/body_operations.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include "resources/config.h"
 
@@ -54,7 +54,7 @@ public:
     shapes::Box box(1.0, 1.0, 1.0);
     shape_meshes.push_back(shapes::createMeshFromShape(&box));
     loaded_meshes.push_back(shapes::createMeshFromResource(
-        "file://" + (boost::filesystem::path(TEST_RESOURCES_DIR) / "/cube.stl").string()));
+        "file://" + (std::filesystem::path(TEST_RESOURCES_DIR) / "cube.stl").string()));
 
     shape_convex_meshes.push_back(new bodies::ConvexMesh(shape_meshes.back()));
     loaded_convex_meshes.push_back(new bodies::ConvexMesh(loaded_meshes.back()));

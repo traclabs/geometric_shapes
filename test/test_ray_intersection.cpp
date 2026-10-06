@@ -32,7 +32,7 @@
 #include <geometric_shapes/bodies.h>
 #include <geometric_shapes/shape_operations.h>
 #include <geometric_shapes/body_operations.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <random_numbers/random_numbers.h>
 #include <gtest/gtest.h>
 #include "resources/config.h"

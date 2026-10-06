@@ -38,7 +38,6 @@ extern "C" {
 #include <libqhull_r.h>
 }
 
-#include <boost/math/constants/constants.hpp>
 #include <limits>
 #include <cstdio>
 #include <cmath>  // std::fmin, std::fmax
@@ -179,7 +178,7 @@ std::shared_ptr<bodies::Body> bodies::Sphere::cloneAt(const Eigen::Isometry3d& p
 
 double bodies::Sphere::computeVolume() const
 {
-  return 4.0 * boost::math::constants::pi<double>() * radiusU_ * radiusU_ * radiusU_ / 3.0;
+  return 4.0 * M_PI * radiusU_ * radiusU_ * radiusU_ / 3.0;
 }
 
 void bodies::Sphere::computeBoundingSphere(BoundingSphere& sphere) const
@@ -376,7 +375,7 @@ bool bodies::Cylinder::samplePointInside(random_numbers::RandomNumberGenerator& 
                                          Eigen::Vector3d& result) const
 {
   // sample a point on the base disc of the cylinder
-  double a = rng.uniformReal(-boost::math::constants::pi<double>(), boost::math::constants::pi<double>());
+  double a = rng.uniformReal(-M_PI, M_PI);
   double r = rng.uniformReal(-radiusU_, radiusU_);
   double x = cos(a) * r;
   double y = sin(a) * r;
@@ -403,7 +402,7 @@ std::shared_ptr<bodies::Body> bodies::Cylinder::cloneAt(const Eigen::Isometry3d&
 
 double bodies::Cylinder::computeVolume() const
 {
-  return 2.0 * boost::math::constants::pi<double>() * radius2_ * length2_;
+  return 2.0 * M_PI * radius2_ * length2_;
 }
 
 void bodies::Cylinder::computeBoundingSphere(BoundingSphere& sphere) const

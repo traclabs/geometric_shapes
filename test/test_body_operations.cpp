@@ -28,7 +28,7 @@
 
 #include <geometric_shapes/body_operations.h>
 #include <geometric_shapes/shape_operations.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include "resources/config.h"
 #include <gtest/gtest.h>
 
@@ -114,7 +114,7 @@ TEST(Bodies, ConstructShapeFromBodyCylinder)
 TEST(Bodies, ConstructShapeFromBodyMesh)
 {
   shapes::Mesh* shape =
-      shapes::createMeshFromResource("file://" + (boost::filesystem::path(TEST_RESOURCES_DIR) / "/box.dae").string());
+      shapes::createMeshFromResource("file://" + (std::filesystem::path(TEST_RESOURCES_DIR) / "box.dae").string());
   const auto body = new ConvexMesh(shape);
 
   const auto constructedShape = constructShapeFromBody(body);
@@ -231,7 +231,7 @@ TEST(Bodies, ConstructMarkerFromBodyMesh)
       Eigen::Translation3d(1.0, 2.0, 3.0) * Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d(0.0, 1.0, 0.0));
 
   shapes::Mesh* shape =
-      shapes::createMeshFromResource("file://" + (boost::filesystem::path(TEST_RESOURCES_DIR) / "/box.dae").string());
+      shapes::createMeshFromResource("file://" + (std::filesystem::path(TEST_RESOURCES_DIR) / "box.dae").string());
   const auto body = new ConvexMesh(shape);
   body->setPose(pose);
 

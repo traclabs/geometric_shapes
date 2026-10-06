@@ -34,12 +34,20 @@
 #include <shape_msgs/msg/solid_primitive.hpp>
 #include <shape_msgs/msg/mesh.hpp>
 #include <shape_msgs/msg/plane.hpp>
-#include <boost/variant.hpp>
+#include <boost/variant.hpp>  // only needed for the deprecated ShapeMsg
+#include <variant>
 
 namespace shapes
 {
 /** \brief Type that can hold any of the desired shape message types */
-typedef boost::variant<shape_msgs::msg::SolidPrimitive, shape_msgs::msg::Mesh, shape_msgs::msg::Plane> ShapeMsg;
+using ShapeMsgVariant = std::variant<shape_msgs::msg::SolidPrimitive, shape_msgs::msg::Mesh, shape_msgs::msg::Plane>;
+
+/** \brief Type that can hold any of the desired shape message types
+ *  \deprecated Use ShapeMsgVariant (std::variant) instead. This boost::variant based type, together with the
+ *  functions taking it, will be removed in a future release. */
+using ShapeMsg [[deprecated("Use shapes::ShapeMsgVariant (std::variant) instead of the boost::variant based "
+                            "shapes::ShapeMsg")]] =
+    boost::variant<shape_msgs::msg::SolidPrimitive, shape_msgs::msg::Mesh, shape_msgs::msg::Plane>;
 }  // namespace shapes
 
 #endif

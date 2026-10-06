@@ -39,12 +39,10 @@
   <build_depend>libqhull</build_depend>
   <build_depend>pkg-config</build_depend>
   <build_depend>libboost-dev</build_depend>
-  <build_depend>libboost-filesystem-dev</build_depend>
 
   <build_export_depend>libboost-dev</build_export_depend>
 
   <exec_depend>assimp</exec_depend>
-  <exec_depend>libboost-filesystem</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
   <exec_depend>libfcl</exec_depend>
   <exec_depend>libqhull</exec_depend>

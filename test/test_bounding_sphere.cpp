@@ -31,7 +31,7 @@
 #include <geometric_shapes/bodies.h>
 #include <geometric_shapes/shape_operations.h>
 #include <geometric_shapes/body_operations.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 
 TEST(SphereBoundingSphere, Sphere1)

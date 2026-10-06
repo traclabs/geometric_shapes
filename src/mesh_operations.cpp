@@ -28,6 +28,7 @@
 
 /* Author: Ioan Sucan */
 
+#define _USE_MATH_DEFINES
 #include "geometric_shapes/mesh_operations.h"
 #include "geometric_shapes/shape_operations.h"
 
@@ -55,8 +56,6 @@
 #include <assimp/postprocess.h>
 
 #include <Eigen/Geometry>
-
-#include <boost/math/constants/constants.hpp>
 
 namespace shapes
 {
@@ -445,7 +444,7 @@ Mesh* createMeshFromShape(const Sphere& sphere)
   std::vector<unsigned int> triangles;
 
   const double r = sphere.radius;
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = M_PI;
   const unsigned int seg = std::max<unsigned int>(6, 0.5 + 2.0 * pi * r / 0.01);  // split the sphere longitudinally up
                                                                                   // to a resolution of 1 cm at the
                                                                                   // ecuator, or a minimum of 6 segments
@@ -519,7 +518,7 @@ Mesh* createMeshFromShape(const Cylinder& cylinder)
   double r = cylinder.radius;
   double h = cylinder.length;
 
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = M_PI;
   unsigned int tot = std::max<unsigned int>(6, ceil(tot_for_unit_cylinder * r));
   double phid = pi * 2 / tot;
 
@@ -590,7 +589,7 @@ Mesh* createMeshFromShape(const Cone& cone)
   double r = cone.radius;
   double h = cone.length;
 
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = M_PI;
   unsigned int tot = tot_for_unit_cone * r;
   double phid = pi * 2 / tot;
 

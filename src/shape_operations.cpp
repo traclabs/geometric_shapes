@@ -113,7 +113,7 @@ Shape* constructShapeFromMsg(const shape_msgs::msg::SolidPrimitive& shape_msg)
 
 namespace
 {
-class ShapeVisitorAlloc : public boost::static_visitor<Shape*>
+class ShapeVisitorAlloc
 {
 public:
   Shape* operator()(const shape_msgs::msg::Plane& shape_msg) const
@@ -133,18 +133,18 @@ public:
 };
 }  // namespace
 
-Shape* constructShapeFromMsg(const ShapeMsg& shape_msg)
+Shape* constructShapeFromMsg(const ShapeMsgVariant& shape_msg)
 {
-  return boost::apply_visitor(ShapeVisitorAlloc(), shape_msg);
+  return std::visit(ShapeVisitorAlloc(), shape_msg);
 }
 
 namespace
 {
-class ShapeVisitorMarker : public boost::static_visitor<void>
+class ShapeVisitorMarker
 {
 public:
   ShapeVisitorMarker(visualization_msgs::msg::Marker* marker, bool use_mesh_triangle_list)
-    : boost::static_visitor<void>(), use_mesh_triangle_list_(use_mesh_triangle_list), marker_(marker)
+    : use_mesh_triangle_list_(use_mesh_triangle_list), marker_(marker)
   {
   }
 
@@ -171,13 +171,13 @@ private:
 
 bool constructMarkerFromShape(const Shape* shape, visualization_msgs::msg::Marker& marker, bool use_mesh_triangle_list)
 {
-  ShapeMsg shape_msg;
+  ShapeMsgVariant shape_msg;
   if (constructMsgFromShape(shape, shape_msg))
   {
     bool ok = false;
     try
     {
-      boost::apply_visitor(ShapeVisitorMarker(&marker, use_mesh_triangle_list), shape_msg);
+      std::visit(ShapeVisitorMarker(&marker, use_mesh_triangle_list), shape_msg);
       ok = true;
     }
     catch (std::runtime_error& ex)
@@ -192,7 +192,7 @@ bool constructMarkerFromShape(const Shape* shape, visualization_msgs::msg::Marke
 
 namespace
 {
-class ShapeVisitorComputeExtents : public boost::static_visitor<Eigen::Vector3d>
+class ShapeVisitorComputeExtents
 {
 public:
   Eigen::Vector3d operator()(const shape_msgs::msg::Plane& /* shape_msg */) const
@@ -219,9 +219,24 @@ public:
 };
 }  // namespace
 
-Eigen::Vector3d computeShapeExtents(const ShapeMsg& shape_msg)
+Eigen::Vector3d computeShapeExtents(const ShapeMsgVariant& shape_msg)
 {
-  return boost::apply_visitor(ShapeVisitorComputeExtents(), shape_msg);
+  return std::visit(ShapeVisitorComputeExtents(), shape_msg);
+}
+
+Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::SolidPrimitive& shape_msg)
+{
+  return ShapeVisitorComputeExtents()(shape_msg);
+}
+
+Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::Plane& shape_msg)
+{
+  return ShapeVisitorComputeExtents()(shape_msg);
+}
+
+Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::Mesh& shape_msg)
+{
+  return ShapeVisitorComputeExtents()(shape_msg);
 }
 
 Eigen::Vector3d computeShapeExtents(const Shape* shape)
@@ -340,7 +355,7 @@ void computeShapeBoundingSphere(const Shape* shape, Eigen::Vector3d& center, dou
   }
 }
 
-bool constructMsgFromShape(const Shape* shape, ShapeMsg& shape_msg)
+bool constructMsgFromShape(const Shape* shape, ShapeMsgVariant& shape_msg)
 {
   if (shape->type == SPHERE)
   {
@@ -570,4 +585,47 @@ const std::string& shapeStringName(const Shape* shape)
     return empty;
   }
 }
+// Deprecated boost::variant based API. Delegates to the std::variant based API.
+// TODO: remove together with shapes::ShapeMsg in a future release.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
+
+namespace
+{
+ShapeMsgVariant toVariant(const ShapeMsg& shape_msg)
+{
+  return boost::apply_visitor([](const auto& msg) { return ShapeMsgVariant(msg); }, shape_msg);
+}
+}  // namespace
+
+Shape* constructShapeFromMsg(const ShapeMsg& shape_msg)
+{
+  return constructShapeFromMsg(toVariant(shape_msg));
+}
+
+bool constructMsgFromShape(const Shape* shape, ShapeMsg& shape_msg)
+{
+  ShapeMsgVariant variant;
+  if (!constructMsgFromShape(shape, variant))
+    return false;
+  std::visit([&shape_msg](const auto& msg) { shape_msg = msg; }, variant);
+  return true;
+}
+
+Eigen::Vector3d computeShapeExtents(const ShapeMsg& shape_msg)
+{
+  return computeShapeExtents(toVariant(shape_msg));
+}
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
 }  // namespace shapes

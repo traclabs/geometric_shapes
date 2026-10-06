@@ -53,6 +53,14 @@ Body* constructBodyFromMsg(const shape_msgs::msg::Mesh& shape, const geometry_ms
 Body* constructBodyFromMsg(const shape_msgs::msg::SolidPrimitive& shape, const geometry_msgs::msg::Pose& pose);
 
 /** \brief Create a body from a given shape */
+Body* constructBodyFromMsg(const shape_msgs::msg::Plane& shape, const geometry_msgs::msg::Pose& pose);
+
+/** \brief Create a body from a given shape */
+Body* constructBodyFromMsg(const shapes::ShapeMsgVariant& shape, const geometry_msgs::msg::Pose& pose);
+
+/** \brief Create a body from a given shape
+ *  \deprecated Use the overload taking a shapes::ShapeMsgVariant. */
+[[deprecated("Use the overload taking shapes::ShapeMsgVariant")]]
 Body* constructBodyFromMsg(const shapes::ShapeMsg& shape, const geometry_msgs::msg::Pose& pose);
 
 /** \brief Get a shape that corresponds to this (scaled and padded) body. */
