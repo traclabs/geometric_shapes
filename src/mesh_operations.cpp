@@ -444,20 +444,18 @@ Mesh* createMeshFromShape(const Sphere& sphere)
   std::vector<unsigned int> triangles;
 
   const double r = sphere.radius;
-  const double pi = M_PI;
-  const unsigned int seg = std::max<unsigned int>(6, 0.5 + 2.0 * pi * r / 0.01);  // split the sphere longitudinally up
-                                                                                  // to a resolution of 1 cm at the
-                                                                                  // ecuator, or a minimum of 6 segments
+  // split the sphere longitudinally up to a resolution of 1 cm at the ecuator, or a minimum of 6 segments
+  const unsigned int seg = std::max<unsigned int>(6, 0.5 + 2.0 * M_PI * r / 0.01);
   const unsigned int ring = std::max<unsigned int>(6, 2.0 * r / 0.01);  // split the sphere into rings along latitude,
                                                                         // up to a height of at most 1 cm, or a minimum
                                                                         // of 6 rings
 
   double phi, phid;
-  phid = pi * 2.0 / seg;
+  phid = M_PI * 2.0 / seg;
   phi = 0.0;
 
   double theta, thetad;
-  thetad = pi / (ring + 1);
+  thetad = M_PI / (ring + 1);
   theta = 0;
 
   for (unsigned int i = 0; i < ring; ++i)
@@ -518,9 +516,8 @@ Mesh* createMeshFromShape(const Cylinder& cylinder)
   double r = cylinder.radius;
   double h = cylinder.length;
 
-  const double pi = M_PI;
   unsigned int tot = std::max<unsigned int>(6, ceil(tot_for_unit_cylinder * r));
-  double phid = pi * 2 / tot;
+  double phid = M_PI * 2 / tot;
 
   double circle_edge = phid * r;
   unsigned int h_num = ceil(std::abs(h) / circle_edge);
@@ -589,9 +586,8 @@ Mesh* createMeshFromShape(const Cone& cone)
   double r = cone.radius;
   double h = cone.length;
 
-  const double pi = M_PI;
   unsigned int tot = tot_for_unit_cone * r;
-  double phid = pi * 2 / tot;
+  double phid = M_PI * 2 / tot;
 
   double circle_edge = phid * r;
   unsigned int h_num = ceil(h / circle_edge);
