@@ -1,4 +1,4 @@
-find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Boost CONFIG REQUIRED COMPONENTS filesystem)
 find_package(ament_cmake_gtest REQUIRED)
 
 file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/resources" TEST_RESOURCES_DIR)

@@ -39,7 +39,7 @@ find_package(Eigen3 REQUIRED)
 
 find_package(ament_cmake REQUIRED)
 find_package(assimp REQUIRED)
-find_package(Boost REQUIRED COMPONENTS thread)
+find_package(Boost CONFIG REQUIRED COMPONENTS thread)
 find_package(console_bridge REQUIRED)
 find_package(console_bridge_vendor REQUIRED)
 find_package(eigen_stl_containers REQUIRED)
@@ -55,7 +55,6 @@ find_package(fcl REQUIRED)
 set(THIS_PACKAGE_EXPORT_DEPENDS
   eigen3_cmake_module
   Eigen3
-  Boost
   console_bridge
   console_bridge_vendor
   eigen_stl_containers
@@ -126,4 +125,7 @@ install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(${THIS_PACKAGE_EXPORT_DEPENDS})
 
-ament_package()
+# Boost is found in CONFIG mode by cmake/ConfigExtras.cmake instead of being listed in
+# THIS_PACKAGE_EXPORT_DEPENDS, which would generate a plain find_package(Boost) (FindBoost module,
+# removed by CMake policy CMP0167) in downstream projects.
+ament_package(CONFIG_EXTRAS cmake/ConfigExtras.cmake)
