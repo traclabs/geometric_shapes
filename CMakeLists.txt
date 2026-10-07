@@ -39,7 +39,6 @@ find_package(Eigen3 REQUIRED)
 
 find_package(ament_cmake REQUIRED)
 find_package(assimp REQUIRED)
-find_package(Boost REQUIRED COMPONENTS thread)
 find_package(console_bridge REQUIRED)
 find_package(console_bridge_vendor REQUIRED)
 find_package(eigen_stl_containers REQUIRED)
@@ -55,7 +54,6 @@ find_package(fcl REQUIRED)
 set(THIS_PACKAGE_EXPORT_DEPENDS
   eigen3_cmake_module
   Eigen3
-  Boost
   console_bridge
   console_bridge_vendor
   eigen_stl_containers

@@ -197,35 +197,10 @@ Body* constructBodyFromMsgHelper(const T& shape_msg, const geometry_msgs::msg::P
 }
 }  // namespace bodies
 
-bodies::Body* bodies::constructBodyFromMsg(const shapes::ShapeMsgVariant& shape_msg,
-                                           const geometry_msgs::msg::Pose& pose)
-{
-  return constructBodyFromMsgHelper(shape_msg, pose);
-}
-
 bodies::Body* bodies::constructBodyFromMsg(const shape_msgs::msg::Plane& shape_msg, const geometry_msgs::msg::Pose& pose)
 {
   return constructBodyFromMsgHelper(shape_msg, pose);
 }
-
-// Deprecated boost::variant based overload. TODO: remove together with shapes::ShapeMsg in a future release.
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#elif defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4996)
-#endif
-bodies::Body* bodies::constructBodyFromMsg(const shapes::ShapeMsg& shape_msg, const geometry_msgs::msg::Pose& pose)
-{
-  return boost::apply_visitor(
-      [&pose](const auto& msg) -> bodies::Body* { return constructBodyFromMsgHelper(msg, pose); }, shape_msg);
-}
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 bodies::Body* bodies::constructBodyFromMsg(const shape_msgs::msg::Mesh& shape_msg, const geometry_msgs::msg::Pose& pose)
 {

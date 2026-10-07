@@ -456,21 +456,18 @@ TEST(Mesh, ScaleAndPadd)
   EXPECT_DOUBLE_EQ(mesh2->vertices[23], pos5z);
 }
 
-TEST(ShapeMsgVariant, RoundTrip)
+TEST(ShapeMsgs, RoundTrip)
 {
   const Box box(1.0, 2.0, 3.0);
 
-  ShapeMsgVariant msg;
+  shape_msgs::msg::SolidPrimitive msg;
   ASSERT_TRUE(constructMsgFromShape(&box, msg));
-  ASSERT_TRUE(std::holds_alternative<shape_msgs::msg::SolidPrimitive>(msg));
+  EXPECT_EQ(msg.type, shape_msgs::msg::SolidPrimitive::BOX);
 
   const Eigen::Vector3d extents = computeShapeExtents(msg);
   EXPECT_DOUBLE_EQ(extents.x(), 1.0);
   EXPECT_DOUBLE_EQ(extents.y(), 2.0);
   EXPECT_DOUBLE_EQ(extents.z(), 3.0);
-
-  // A plain message must still resolve to a single overload (no ambiguity with the deprecated API)
-  EXPECT_DOUBLE_EQ(computeShapeExtents(std::get<shape_msgs::msg::SolidPrimitive>(msg)).y(), 2.0);
 
   std::unique_ptr<Shape> shape(constructShapeFromMsg(msg));
   ASSERT_NE(shape, nullptr);
@@ -478,31 +475,20 @@ TEST(ShapeMsgVariant, RoundTrip)
   EXPECT_DOUBLE_EQ(static_cast<const Box*>(shape.get())->size[2], 3.0);
 }
 
-// The deprecated boost::variant based API must keep working until it is removed
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-TEST(ShapeMsgVariant, DeprecatedBoostApi)
+TEST(ShapeMsgs, WrongShapeTypeIsRejected)
 {
   const Box box(1.0, 2.0, 3.0);
+  shape_msgs::msg::Plane plane_msg;
+  shape_msgs::msg::Mesh mesh_msg;
+  EXPECT_FALSE(constructMsgFromShape(&box, plane_msg));
+  EXPECT_FALSE(constructMsgFromShape(&box, mesh_msg));
 
-  ShapeMsg msg;
-  ASSERT_TRUE(constructMsgFromShape(&box, msg));
-  ASSERT_NE(boost::get<shape_msgs::msg::SolidPrimitive>(&msg), nullptr);
-
-  const Eigen::Vector3d extents = computeShapeExtents(msg);
-  EXPECT_DOUBLE_EQ(extents.x(), 1.0);
-  EXPECT_DOUBLE_EQ(extents.y(), 2.0);
-  EXPECT_DOUBLE_EQ(extents.z(), 3.0);
-
-  std::unique_ptr<Shape> shape(constructShapeFromMsg(msg));
-  ASSERT_NE(shape, nullptr);
-  EXPECT_EQ(shape->type, BOX);
+  const Plane plane(0.0, 0.0, 1.0, 2.0);
+  shape_msgs::msg::SolidPrimitive primitive_msg;
+  ASSERT_TRUE(constructMsgFromShape(&plane, plane_msg));
+  EXPECT_FALSE(constructMsgFromShape(&plane, primitive_msg));
+  EXPECT_DOUBLE_EQ(plane_msg.coef[3], 2.0);
 }
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
 
 int main(int argc, char** argv)
 {

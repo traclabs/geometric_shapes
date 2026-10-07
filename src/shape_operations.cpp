@@ -111,132 +111,47 @@ Shape* constructShapeFromMsg(const shape_msgs::msg::SolidPrimitive& shape_msg)
   return shape;
 }
 
-namespace
-{
-class ShapeVisitorAlloc
-{
-public:
-  Shape* operator()(const shape_msgs::msg::Plane& shape_msg) const
-  {
-    return constructShapeFromMsg(shape_msg);
-  }
-
-  Shape* operator()(const shape_msgs::msg::Mesh& shape_msg) const
-  {
-    return constructShapeFromMsg(shape_msg);
-  }
-
-  Shape* operator()(const shape_msgs::msg::SolidPrimitive& shape_msg) const
-  {
-    return constructShapeFromMsg(shape_msg);
-  }
-};
-}  // namespace
-
-Shape* constructShapeFromMsg(const ShapeMsgVariant& shape_msg)
-{
-  return std::visit(ShapeVisitorAlloc(), shape_msg);
-}
-
-namespace
-{
-class ShapeVisitorMarker
-{
-public:
-  ShapeVisitorMarker(visualization_msgs::msg::Marker* marker, bool use_mesh_triangle_list)
-    : use_mesh_triangle_list_(use_mesh_triangle_list), marker_(marker)
-  {
-  }
-
-  void operator()(const shape_msgs::msg::Plane& /* shape_msg */) const
-  {
-    throw std::runtime_error("No visual markers can be constructed for planes");
-  }
-
-  void operator()(const shape_msgs::msg::Mesh& shape_msg) const
-  {
-    geometric_shapes::constructMarkerFromShape(shape_msg, *marker_, use_mesh_triangle_list_);
-  }
-
-  void operator()(const shape_msgs::msg::SolidPrimitive& shape_msg) const
-  {
-    geometric_shapes::constructMarkerFromShape(shape_msg, *marker_);
-  }
-
-private:
-  bool use_mesh_triangle_list_;
-  visualization_msgs::msg::Marker* marker_;
-};
-}  // namespace
-
 bool constructMarkerFromShape(const Shape* shape, visualization_msgs::msg::Marker& marker, bool use_mesh_triangle_list)
 {
-  ShapeMsgVariant shape_msg;
-  if (constructMsgFromShape(shape, shape_msg))
+  if (shape->type == PLANE)
   {
-    bool ok = false;
-    try
-    {
-      std::visit(ShapeVisitorMarker(&marker, use_mesh_triangle_list), shape_msg);
-      ok = true;
-    }
-    catch (std::runtime_error& ex)
-    {
-      CONSOLE_BRIDGE_logError("%s", ex.what());
-    }
-    if (ok)
-      return true;
-  }
-  return false;
-}
-
-namespace
-{
-class ShapeVisitorComputeExtents
-{
-public:
-  Eigen::Vector3d operator()(const shape_msgs::msg::Plane& /* shape_msg */) const
-  {
-    Eigen::Vector3d e(0.0, 0.0, 0.0);
-    return e;
+    CONSOLE_BRIDGE_logError("No visual markers can be constructed for planes");
+    return false;
   }
 
-  Eigen::Vector3d operator()(const shape_msgs::msg::Mesh& shape_msg) const
+  if (shape->type == MESH)
   {
-    double x_extent, y_extent, z_extent;
-    geometric_shapes::getShapeExtents(shape_msg, x_extent, y_extent, z_extent);
-    Eigen::Vector3d e(x_extent, y_extent, z_extent);
-    return e;
+    shape_msgs::msg::Mesh mesh_msg;
+    if (!constructMsgFromShape(shape, mesh_msg))
+      return false;
+    geometric_shapes::constructMarkerFromShape(mesh_msg, marker, use_mesh_triangle_list);
+    return true;
   }
 
-  Eigen::Vector3d operator()(const shape_msgs::msg::SolidPrimitive& shape_msg) const
-  {
-    double x_extent, y_extent, z_extent;
-    geometric_shapes::getShapeExtents(shape_msg, x_extent, y_extent, z_extent);
-    Eigen::Vector3d e(x_extent, y_extent, z_extent);
-    return e;
-  }
-};
-}  // namespace
-
-Eigen::Vector3d computeShapeExtents(const ShapeMsgVariant& shape_msg)
-{
-  return std::visit(ShapeVisitorComputeExtents(), shape_msg);
+  shape_msgs::msg::SolidPrimitive primitive_msg;
+  if (!constructMsgFromShape(shape, primitive_msg))
+    return false;
+  geometric_shapes::constructMarkerFromShape(primitive_msg, marker);
+  return true;
 }
 
 Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::SolidPrimitive& shape_msg)
 {
-  return ShapeVisitorComputeExtents()(shape_msg);
+  double x_extent, y_extent, z_extent;
+  geometric_shapes::getShapeExtents(shape_msg, x_extent, y_extent, z_extent);
+  return Eigen::Vector3d(x_extent, y_extent, z_extent);
 }
 
-Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::Plane& shape_msg)
+Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::Plane& /* shape_msg */)
 {
-  return ShapeVisitorComputeExtents()(shape_msg);
+  return Eigen::Vector3d(0.0, 0.0, 0.0);
 }
 
 Eigen::Vector3d computeShapeExtents(const shape_msgs::msg::Mesh& shape_msg)
 {
-  return ShapeVisitorComputeExtents()(shape_msg);
+  double x_extent, y_extent, z_extent;
+  geometric_shapes::getShapeExtents(shape_msg, x_extent, y_extent, z_extent);
+  return Eigen::Vector3d(x_extent, y_extent, z_extent);
 }
 
 Eigen::Vector3d computeShapeExtents(const Shape* shape)
@@ -355,83 +270,93 @@ void computeShapeBoundingSphere(const Shape* shape, Eigen::Vector3d& center, dou
   }
 }
 
-bool constructMsgFromShape(const Shape* shape, ShapeMsgVariant& shape_msg)
+bool constructMsgFromShape(const Shape* shape, shape_msgs::msg::SolidPrimitive& shape_msg)
 {
   if (shape->type == SPHERE)
   {
-    shape_msgs::msg::SolidPrimitive s;
-    s.type = shape_msgs::msg::SolidPrimitive::SPHERE;
-    s.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::SPHERE>());
-    s.dimensions[shape_msgs::msg::SolidPrimitive::SPHERE_RADIUS] = static_cast<const Sphere*>(shape)->radius;
-    shape_msg = s;
+        shape_msg.type = shape_msgs::msg::SolidPrimitive::SPHERE;
+    shape_msg.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::SPHERE>());
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::SPHERE_RADIUS] = static_cast<const Sphere*>(shape)->radius;
+    
   }
   else if (shape->type == BOX)
   {
-    shape_msgs::msg::SolidPrimitive s;
-    s.type = shape_msgs::msg::SolidPrimitive::BOX;
+        shape_msg.type = shape_msgs::msg::SolidPrimitive::BOX;
     const double* sz = static_cast<const Box*>(shape)->size;
-    s.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::BOX>());
-    s.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = sz[0];
-    s.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = sz[1];
-    s.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = sz[2];
-    shape_msg = s;
+    shape_msg.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::BOX>());
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::BOX_X] = sz[0];
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Y] = sz[1];
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::BOX_Z] = sz[2];
+    
   }
   else if (shape->type == CYLINDER)
   {
-    shape_msgs::msg::SolidPrimitive s;
-    s.type = shape_msgs::msg::SolidPrimitive::CYLINDER;
-    s.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::CYLINDER>());
-    s.dimensions[shape_msgs::msg::SolidPrimitive::CYLINDER_RADIUS] = static_cast<const Cylinder*>(shape)->radius;
-    s.dimensions[shape_msgs::msg::SolidPrimitive::CYLINDER_HEIGHT] = static_cast<const Cylinder*>(shape)->length;
-    shape_msg = s;
+        shape_msg.type = shape_msgs::msg::SolidPrimitive::CYLINDER;
+    shape_msg.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::CYLINDER>());
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::CYLINDER_RADIUS] = static_cast<const Cylinder*>(shape)->radius;
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::CYLINDER_HEIGHT] = static_cast<const Cylinder*>(shape)->length;
+    
   }
   else if (shape->type == CONE)
   {
-    shape_msgs::msg::SolidPrimitive s;
-    s.type = shape_msgs::msg::SolidPrimitive::CONE;
-    s.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::CONE>());
-    s.dimensions[shape_msgs::msg::SolidPrimitive::CONE_RADIUS] = static_cast<const Cone*>(shape)->radius;
-    s.dimensions[shape_msgs::msg::SolidPrimitive::CONE_HEIGHT] = static_cast<const Cone*>(shape)->length;
-    shape_msg = s;
-  }
-  else if (shape->type == PLANE)
-  {
-    shape_msgs::msg::Plane s;
-    const Plane* p = static_cast<const Plane*>(shape);
-    s.coef[0] = p->a;
-    s.coef[1] = p->b;
-    s.coef[2] = p->c;
-    s.coef[3] = p->d;
-    shape_msg = s;
-  }
-  else if (shape->type == MESH)
-  {
-    shape_msgs::msg::Mesh s;
-    const Mesh* mesh = static_cast<const Mesh*>(shape);
-    s.vertices.resize(mesh->vertex_count);
-    s.triangles.resize(mesh->triangle_count);
-
-    for (unsigned int i = 0; i < mesh->vertex_count; ++i)
-    {
-      unsigned int i3 = i * 3;
-      s.vertices[i].x = mesh->vertices[i3];
-      s.vertices[i].y = mesh->vertices[i3 + 1];
-      s.vertices[i].z = mesh->vertices[i3 + 2];
-    }
-
-    for (unsigned int i = 0; i < s.triangles.size(); ++i)
-    {
-      unsigned int i3 = i * 3;
-      s.triangles[i].vertex_indices[0] = mesh->triangles[i3];
-      s.triangles[i].vertex_indices[1] = mesh->triangles[i3 + 1];
-      s.triangles[i].vertex_indices[2] = mesh->triangles[i3 + 2];
-    }
-    shape_msg = s;
+        shape_msg.type = shape_msgs::msg::SolidPrimitive::CONE;
+    shape_msg.dimensions.resize(geometric_shapes::solidPrimitiveDimCount<shape_msgs::msg::SolidPrimitive::CONE>());
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::CONE_RADIUS] = static_cast<const Cone*>(shape)->radius;
+    shape_msg.dimensions[shape_msgs::msg::SolidPrimitive::CONE_HEIGHT] = static_cast<const Cone*>(shape)->length;
+    
   }
   else
   {
-    CONSOLE_BRIDGE_logError("Unable to construct shape message for shape of type %d", (int)shape->type);
+    CONSOLE_BRIDGE_logError("Unable to construct a SolidPrimitive message for shape of type %d", (int)shape->type);
     return false;
+  }
+
+  return true;
+}
+
+bool constructMsgFromShape(const Shape* shape, shape_msgs::msg::Plane& shape_msg)
+{
+  if (shape->type != PLANE)
+  {
+    CONSOLE_BRIDGE_logError("Unable to construct a Plane message for shape of type %d", (int)shape->type);
+    return false;
+  }
+
+      const Plane* p = static_cast<const Plane*>(shape);
+  shape_msg.coef[0] = p->a;
+  shape_msg.coef[1] = p->b;
+  shape_msg.coef[2] = p->c;
+  shape_msg.coef[3] = p->d;
+
+  return true;
+}
+
+bool constructMsgFromShape(const Shape* shape, shape_msgs::msg::Mesh& shape_msg)
+{
+  if (shape->type != MESH)
+  {
+    CONSOLE_BRIDGE_logError("Unable to construct a Mesh message for shape of type %d", (int)shape->type);
+    return false;
+  }
+
+  const Mesh* mesh = static_cast<const Mesh*>(shape);
+  shape_msg.vertices.resize(mesh->vertex_count);
+  shape_msg.triangles.resize(mesh->triangle_count);
+
+  for (unsigned int i = 0; i < mesh->vertex_count; ++i)
+  {
+    unsigned int i3 = i * 3;
+    shape_msg.vertices[i].x = mesh->vertices[i3];
+    shape_msg.vertices[i].y = mesh->vertices[i3 + 1];
+    shape_msg.vertices[i].z = mesh->vertices[i3 + 2];
+  }
+
+  for (unsigned int i = 0; i < shape_msg.triangles.size(); ++i)
+  {
+    unsigned int i3 = i * 3;
+    shape_msg.triangles[i].vertex_indices[0] = mesh->triangles[i3];
+    shape_msg.triangles[i].vertex_indices[1] = mesh->triangles[i3 + 1];
+    shape_msg.triangles[i].vertex_indices[2] = mesh->triangles[i3 + 2];
   }
 
   return true;
@@ -585,47 +510,4 @@ const std::string& shapeStringName(const Shape* shape)
     return empty;
   }
 }
-// Deprecated boost::variant based API. Delegates to the std::variant based API.
-// TODO: remove together with shapes::ShapeMsg in a future release.
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#elif defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4996)
-#endif
-
-namespace
-{
-ShapeMsgVariant toVariant(const ShapeMsg& shape_msg)
-{
-  return boost::apply_visitor([](const auto& msg) { return ShapeMsgVariant(msg); }, shape_msg);
-}
-}  // namespace
-
-Shape* constructShapeFromMsg(const ShapeMsg& shape_msg)
-{
-  return constructShapeFromMsg(toVariant(shape_msg));
-}
-
-bool constructMsgFromShape(const Shape* shape, ShapeMsg& shape_msg)
-{
-  ShapeMsgVariant variant;
-  if (!constructMsgFromShape(shape, variant))
-    return false;
-  std::visit([&shape_msg](const auto& msg) { shape_msg = msg; }, variant);
-  return true;
-}
-
-Eigen::Vector3d computeShapeExtents(const ShapeMsg& shape_msg)
-{
-  return computeShapeExtents(toVariant(shape_msg));
-}
-
-#if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
 }  // namespace shapes
